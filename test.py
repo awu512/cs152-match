@@ -71,6 +71,30 @@ class TestMatch(unittest.TestCase):
         # Check partial derivatives of original match and torch vals tensors
         self.assertTrue(almostEqual(match_vals, torch_vals, check_grad=True))
 
+    def test_leakyrelu(self):
+        """Test the output and gradient of a Leaky ReLU."""
+
+        match_leakyrelu = match.nn.LeakyReLU()
+        torch_leakyrelu = torch.nn.LeakyReLU()
+
+        # Create matching fake tensors
+        match_vals, torch_vals = mat_and_ten(5, 4)
+
+        # Check forward
+        match_leakyrelu_output = match_leakyrelu(match_vals)
+        torch_leakyrelu_output = torch_leakyrelu(torch_vals)
+        self.assertTrue(almostEqual(match_leakyrelu_output, torch_leakyrelu_output))
+
+        # Check backward by applying mean
+        match_leakyrelu_mean = match_leakyrelu_output.mean()
+        match_leakyrelu_mean.backward()
+        torch_leakyrelu_mean = torch_leakyrelu_output.mean()
+        torch_leakyrelu_mean.backward()
+        self.assertTrue(almostEqual(match_leakyrelu_mean, torch_leakyrelu_mean))
+
+        # Check partial derivatives of original match and torch vals tensors
+        self.assertTrue(almostEqual(match_vals, torch_vals, check_grad=True))
+
     def test_mse(self):
         """Test the output and gradient of a MSE loss."""
         match_mse = match.nn.MSELoss()
@@ -90,6 +114,30 @@ class TestMatch(unittest.TestCase):
         match_mse_val.backward()
         torch_mse_val = torch_mse_output.mean()
         torch_mse_val.backward()
+
+        # NOTE: y and yhat don't normally have derivatives, but match computes them
+        self.assertTrue(almostEqual(match_y, torch_y, check_grad=True))
+        self.assertTrue(almostEqual(match_yhat, torch_yhat, check_grad=True))
+
+    def test_mae(self):
+        """Test the output and gradient of a MAE loss."""
+        match_mae = match.nn.MAELoss()
+        torch_mae = torch.nn.L1Loss()
+
+        # Create matching fake tensors
+        match_y, torch_y = mat_and_ten(5, 7)
+        match_yhat, torch_yhat = mat_and_ten(5, 7)
+
+        # Check forward
+        match_mae_output = match_mae(match_y, match_yhat)
+        torch_mae_output = torch_mae(torch_y, torch_yhat)
+        self.assertTrue(almostEqual(match_mae_output, torch_mae_output))
+
+        # Check backward
+        match_mae_val = match_mae_output.mean()
+        match_mae_val.backward()
+        torch_mae_val = torch_mae_output.mean()
+        torch_mae_val.backward()
 
         # NOTE: y and yhat don't normally have derivatives, but match computes them
         self.assertTrue(almostEqual(match_y, torch_y, check_grad=True))

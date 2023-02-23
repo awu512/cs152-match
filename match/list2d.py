@@ -95,6 +95,14 @@ class List2D(object):
         ]
         return List2D(*self.shape, vals)
 
+    def leakyrelu(self) -> List2D:
+        """Return a new List2D object with the Leaky ReLU of each element."""
+        vals = [
+            [max(0.0, self.vals[i][j]) + 0.01 * min(0.0, self.vals[i][j]) for j in range(self.ncol)]
+            for i in range(self.nrow)
+        ]
+        return List2D(*self.shape, vals)
+
     def sigmoid(self) -> List2D:
         """Return a new List2D object with the sigmoid of each element."""
         vals = [
@@ -238,3 +246,11 @@ class List2D(object):
     def __gt__(self, rhs: float | int | List2D) -> List2D:
         """Element-wise comparison: self > rhs."""
         return self.__binary_op(gt, rhs)
+
+    def __abs__(self) -> List2D:
+        out = List2D(self.nrow, self.ncol)
+        out.vals = [
+            [abs(self.vals[i][j]) for j in range(self.ncol)] 
+            for i in range(self.nrow)
+        ]
+        return out

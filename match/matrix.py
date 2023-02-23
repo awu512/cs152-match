@@ -174,6 +174,17 @@ class Matrix(object):
         result._gradient = _gradient
         return result
 
+    def leakyrelu(self) -> Matrix:
+        """Element-wise leaky rectified linear unit (ReLU)."""
+        result = Matrix(self.data.leakyrelu(), children=(self,))
+
+        def _gradient() -> None:
+            info(f"Gradient of Leaky ReLU. Shape: {self.shape}")
+            self.grad += ((result.data > 0) + (-result.data > 0) * 0.01) * result.grad
+
+        result._gradient = _gradient
+        return result
+
     def sigmoid(self) -> Matrix:
         """Element-wise sigmoid."""
         result = Matrix(self.data.sigmoid(), children=(self,))
@@ -279,3 +290,14 @@ class Matrix(object):
     def __neg__(self) -> Matrix:
         """Element-wise unary negation: -self."""
         return self * -1
+
+    def __abs__(self) -> Matrix:
+        """Element-wise absoulte value: |self|"""
+        result = Matrix(abs(self.data), children=(self,))
+
+        def _gradient() -> None:
+            info(f"Gradient of absolute value. Shape: {self.shape}")
+            self.grad += (self.data > 0) * result.grad + (-self.data > 0) * -1.0 * result.grad
+
+        result._gradient = _gradient
+        return result
